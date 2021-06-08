@@ -2,7 +2,7 @@
 Laplacian fractional entropy (LFE) measures evaluate higher-order statistical properties of x-ray images objectively [1-3]. The LFE measure is calculated from the relative entropy of the response histogram of an image compared to that of a Gaussian histogram matched for mean and variance.[1] These measures have shown to be an effective method to evaluate phantom realism and to select simulation parameters [2-3].
 
 ```diff
-+ If you use this software to develop your work, cite manuscript [3] and our most recent publications for furture references
++ If you use this software to develop your work, cite manuscript [3] and our most recent publications for future references
 
 [1]
 [2]
