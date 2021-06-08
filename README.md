@@ -3,50 +3,83 @@ Laplacian fractional entropy (LFE) measures evaluate higher-order statistical pr
 
 This open-source project provides a Jave implementation of the LFE methods. The software is compatible to any operational system*
 
-*Requirement*:
+## Requirement
 
-JRE 8+ - Make sure that you have install the Jave runtime environment on your local machine
+- JRE 8+ 
 
-*Run*:
+Make sure that you have install the Jave runtime environment on your local machine.
+
+## Run
 
 You can run the software via command line using XML files. As example, we provide a template of a phantom image for testing and configurable XML file ("config.xml").
 
 Use the the following command to execute the LFE software:
 
+```
 java -jar LFE_Measurements.jar config.xml
+```
 
-*Config XML*:
+## Config XML
 
-The XML file is divided in three sections: Gabor, LFE, and Images.
+The XML file is divided in three sections: Gabor, LFE, and Images:
 
-Images:
-1) Mask: image path of binary mask (Gray 8-bits, format .RAW)
-2) Original: x-ray image path of binary mask (Gray 16-bits Unsigned, format .RAW)
-3) Width and Height: image size (mask and original) 
+### Images
+- Mask 
 
-Gabor:
-1) Width and Height: Window size of your Gabor kernels used for 2D convolution.
-2) DX and DY: pixel pitch of the x-ray image.
-3) FREQ_CEN: 
-4) A_RATIO:
-5) PSHIFT:
-6) angles:
-7) BW_OCT:
+Image path of binary mask (Gray 8-bits, format .RAW).
 
-LFE:
-1) NH:
-2) EXC_FRAC:
-3) Optmizer_Gauss_ID and Optmizer_Lap_ID: 
+- Original
+
+X-ray image path of binary mask (Gray 16-bits Unsigned, format .RAW).
+
+- Width and height
+
+Image and mask dimensions (pixels).
+
+
+### Gabor
+
+- Width and height 
+
+Window dimensions of your Gabor kernels used for 2D convolution.
+
+- DX and DY 
+
+Pixel pitch of the x-ray image.
+
+- FREQ_CEN
+
+
+- A_RATIO
+
+
+- PSHIFT
+
+
+- angles
+
+
+- BW_OCT
+
+
+
+### LFE
+
+- NH
+
+
+- EXC_FRAC
+
+
+- Optmizer_Gauss_ID and Optmizer_Lap_ID
+
+
   
-  1 - 
-  2 -  
-  3 - 
+  - 1: SIMPLEX
+  - 2: BOBYQA 
+  - 3: POWELL
   
-4) Save_Plot: Flag that writes the LFE plots**
+- Save_Plot
 
-- text in red
-+ text in green
-! text in orange
-# text in gray
-@@ text in purple (and bold)@@
+Flag that writes the images of the LFE plots (.PNG). The datapoints are saved in a separate .CSV file (output).
 
