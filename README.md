@@ -1,7 +1,16 @@
 # LFE
 Laplacian fractional entropy (LFE) measures evaluate higher-order statistical properties of x-ray images objectively [1-3]. The LFE measure is calculated from the relative entropy of the response histogram of an image compared to that of a Gaussian histogram matched for mean and variance.[1] These measures have shown to be an effective method to evaluate phantom realism and to select simulation parameters [2-3].
 
-This open-source project provides a Jave implementation of the LFE methods. The software is compatible to any operational system*
+```diff
++ If you use this software to develop your work, cite manuscript [3] and our most recent publications for furture references
+
+[1]
+[2]
+[3]
+
+```
+
+This open-source project provides a Jave implementation of the LFE methods.
 
 ## Requirement
 
@@ -81,5 +90,7 @@ Pixel pitch of the x-ray image.
   
 - Save_Plot
 
-Flag that writes the images of the LFE plots (.PNG). The datapoints are saved in a separate .CSV file (output).
+Flag that writes the images of the LFE plots (.PNG). Set this flag to "false" if your system does not support a graphical interface.
+
+The datapoints are saved in a separate .CSV file.
 
