@@ -221,12 +221,20 @@ public class Main {
         }
         
         FileSaver fs;
+        File k_folder = new File("kernel");
+        if(!k_folder.exists())
+            k_folder.mkdir();
+        
         for(int i=1 ; i <= kernels.size(); i++){
             fs = new FileSaver(new ImagePlus("_"+i,kernels.getProcessor(i)));
-            fs.saveAsTiff("kernel/_"+i+".tiff");
+            fs.saveAsTiff(k_folder.getName()+"/_"+i+".tiff");
         }
         
         ImageProcessor ip = original.getProcessor();
+        
+        File g_folder = new File("gabor");
+        if(!g_folder.exists())
+            g_folder.mkdir();
 
         // Apply kernels
         float[] kernel;
@@ -240,7 +248,7 @@ public class Main {
 
             is.addSlice("angle="+i+ " gamma="+A_RATIO+ " psi="+PSHIFT+ " freq="+FREQ_CEN, fp);
             fs = new FileSaver(new ImagePlus("_"+i,fp));
-            fs.saveAsTiff("gabor/_"+i+".tiff");
+            fs.saveAsTiff(g_folder.getName()+"/_"+i+".tiff");
         }
 
         //Segment from mask
