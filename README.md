@@ -20,8 +20,8 @@ java -jar LFE_Measurements.jar config.xml
 The XML file is divided in three sections: Gabor, LFE, and Images.
 
 Images:
-1) Mask: image path of binary mask (Gray 8-bits, .RAW)
-2) Original: x-ray image path of binary mask (Gray 16-bits Unsigned, .RAW)
+1) Mask: image path of binary mask (Gray 8-bits, format .RAW)
+2) Original: x-ray image path of binary mask (Gray 16-bits Unsigned, format .RAW)
 3) Width and Height: image size (mask and original) 
 
 Gabor:
@@ -43,4 +43,10 @@ LFE:
   3 - 
   
 4) Save_Plot: Flag that writes the LFE plots**
+
+- text in red
++ text in green
+! text in orange
+# text in gray
+@@ text in purple (and bold)@@
 
