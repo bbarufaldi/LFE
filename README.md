@@ -37,11 +37,12 @@ LFE:
 1) NH:
 2) EXC_FRAC:
 3) Optmizer_Gauss_ID and Optmizer_Lap_ID: 
+  
   1 - 
+  
   2 -
+  
   3 - 
-More information visit:
+  
 4) Save_Plot: Flag that writes the LFE plots**
 
-*
-**
