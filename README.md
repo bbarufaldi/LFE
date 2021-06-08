@@ -9,7 +9,7 @@ JRE 8+ - Make sure that you have install the Jave runtime environment on your lo
 
 *Run*:
 
-You can run the software via command line using XML files. As example, we provide a template of a configurable XML file ("config.xml").
+You can run the software via command line using XML files. As example, we provide a template of a phantom image for testing and configurable XML file ("config.xml").
 
 Use the the following command to execute the LFE software:
 
@@ -39,9 +39,7 @@ LFE:
 3) Optmizer_Gauss_ID and Optmizer_Lap_ID: 
   
   1 - 
-  
-  2 -
-  
+  2 -  
   3 - 
   
 4) Save_Plot: Flag that writes the LFE plots**
