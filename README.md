@@ -10,13 +10,13 @@ Laplacian fractional entropy (LFE) measures evaluate higher-order statistical pr
 
 ```
 
-This open-source project provides a Jave implementation of the LFE methods.
+This open-source project provides a Java implementation of the LFE methods.
 
 ## Requirement
 
 - JRE 8+ 
 
-Make sure that you have install the Jave runtime environment on your local machine.
+Make sure that you have install the Java runtime environment on your local machine.
 
 ## Instructions
 
@@ -85,7 +85,7 @@ The number of histogram bins.
 
 - EXC_FRAC
 
-The Histogram exclusion fraction. This parameter controlss how many points fall in the last histogram bin which is outside the range of consideration. This is done to avoid problems with small counts in extreme values, which LFE will regard as non-gaussian behavior.
+Histogram exclusion fraction. This parameter controls how many points fall in the last histogram bin which is outside the range of consideration. This is done to avoid problems with small counts in extreme values, which LFE will regard as non-gaussian behavior.
 
 - Optmizer_Gauss_ID and Optmizer_Lap_ID
 
