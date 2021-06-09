@@ -18,7 +18,7 @@ This open-source project provides a Jave implementation of the LFE methods.
 
 Make sure that you have install the Jave runtime environment on your local machine.
 
-## Run
+## Instructions
 
 You can run the software via command line using XML files. As example, we provide a template of a phantom image for testing and configurable XML file ("config.xml").
 
