@@ -88,7 +88,7 @@ public class Main {
         // TODO code application logic here
         
         //read config file
-        File xml = new File("config.xml");
+        File xml = new File(args[0]);
         readConfig(xml);
         
         ImageStack is = calculate_Gabors();
