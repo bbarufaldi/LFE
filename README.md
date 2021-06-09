@@ -5,8 +5,8 @@ Laplacian fractional entropy (LFE) is a measure of higher-order statistical prop
 + If you use this software to develop your work, cite our most recent publications for future references
 
 [1] Abbey, Craig K et al. “Non-Gaussian statistical properties of breast images.” Medical physics vol. 39,11 (2012): 7121-30. doi:10.1118/1.4761869
-[2] Abbey, Craig K et al. “Evaluation of non-Gaussian statistical properties in virtual breast phantoms.” J Med Imaging vol. 6,2 (2019):2329-4302. 10.1117/1.JMI.6.2.025502
-[3] Barufaldi, B et al. “Computational Breast Anatomy Simulation Using Multi-scale Perlin Noise.” IEEE Trans Med Imaging vol. (2021):
+[2] Abbey, Craig K et al. “Evaluation of non-Gaussian statistical properties in virtual breast phantoms.” J Med Imaging vol. 6,2 (2019):2329-4302. doi:10.1117/1.JMI.6.2.025502
+[3] Barufaldi, B et al. “Computational Breast Anatomy Simulation Using Multi-scale Perlin Noise.” IEEE Trans Med Imaging vol. 0 (2021): doi:10.1109/TMI.2021.3087958
 
 ```
 
