@@ -89,15 +89,17 @@ The Histogram exclusion fraction. This parameter controlss how many points fall 
 
 - Optmizer_Gauss_ID and Optmizer_Lap_ID
 
-IDs of minimization algorithms used to minimize non-linear funtions to the optimal solution. These "solvers" do not require compute derivatives. More information visit [Commons Math](#https://commons.apache.org/proper/commons-math/).
+IDs of minimization algorithms used to minimize non-linear funtions to the optimal solution. These "solvers" do not require compute derivatives. For more information visit [Commons Math](https://commons.apache.org/proper/commons-math/) website.
   
-  - 1: SIMPLEX: Simplex-based direct search optimization.
-  - 2: BOBYQA: Powell's BOBYQA algorithm.
-  - 3: POWELL: Powell's algorithm.
+  1: SIMPLEX: Simplex-based direct search optimization.
+  
+  2: BOBYQA: Powell's BOBYQA algorithm.
+  
+  3: POWELL: Powell's algorithm.
   
 - Save_Plot
 
-Flag that writes the images of the LFE plots (.PNG). The plots include the histogram and fitted probability functions. Set this flag to "false" if your system does not support a graphical interface.
+Flag that writes the images of the LFE plots (.PNG). The plots include the histogram and fitted probability functions. Set this flag to "false" if your system does not handle graphics.
 
 The datapoints are saved in a separate .CSV file.
 
