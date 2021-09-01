@@ -1,4 +1,21 @@
 
+/*
+
+* Laplacian fractional entropy (LFE) is a measure of higher-order statistical properties of images [1-3]. 
+* The LFE measure is calculated from the relative entropy of the response histogram of an image compared to that of a Gaussian histogram matched for mean and variance [1]. 
+* The approach accounts for entropy effects from binning into a histogram. The Laplacian distribution is used as a scaling constant, since Laplacian response histograms are a model for natural scenes. 
+* The entropy relative to a Gaussian is normalized to the relative entropy of a Laplacian distribution relative to the Gaussian (and also accounting for binning effects). 
+* Thus 100% LFE can be interpreted as having non-Gausian "structure" that is equivalent to a Laplacian distribution. 
+* These measures have shown to be an effective method to evaluate the impact of anatomy and noise in mammography [1], and virtual breast phantom realism [2-3].
+
+* If you use this software to develop your work, cite our most recent publications for future references
+
+[1] Abbey, Craig K et al. “Non-Gaussian statistical properties of breast images.” Med Phys vol. 39,11 (2012): 7121-30. doi:10.1118/1.4761869
+[2] Abbey, Craig K et al. “Evaluation of non-Gaussian statistical properties in virtual breast phantoms.” J Med Imaging vol. 6,2 (2019):2329-4302. doi:10.1117/1.JMI.6.2.025502
+[3] Barufaldi, B et al. “Computational Breast Anatomy Simulation Using Multi-scale Perlin Noise.” IEEE Trans Med Imaging vol. 0 (2021):1-10 doi:10.1109/TMI.2021.3087958
+
+ */
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
@@ -41,23 +58,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  *
  * @author Bruno Barufaldi
  */
 public class Main {
-
-    /**
-     * @param args the command line arguments
-     */
     
-    //Default parameters
+    // Default parameters
     static private int NH = 99; 
     static private double EXC_FRAC = 0.01;
     static private int opt_gauss = 2;       //SIMPLEX = 1, BOBYQA = 2, POWELL = 3
@@ -80,12 +87,15 @@ public class Main {
     static private double DX = 0.07; //pixel pitch
     static private double DY = 0.07;
     
-    //Image Parameters
+    // Image Parameters
     static private String imageName, maskName;
     static private ImagePlus original, mask;
     
+     /**
+     * @param args the command line arguments
+     */
+    
     public static void main(String[] args) {
-        // TODO code application logic here
         
         //read config file
         File xml = new File(args[0]);
@@ -93,7 +103,7 @@ public class Main {
         
         ImageStack is = calculate_Gabors();
         
-        //LFE method (Abbey et al., 2012)
+        //LFE method [Abbey et al., Med. Phys vol. 39,11(2012):7121-30. doi:10.1118/1.4761869]
         for(int k=1 ; k <= is.getSize(); k++){
             //make_resp_hist.pro
             double[][] H = make_resp_hist(is.getProcessor(k)); 
@@ -251,7 +261,7 @@ public class Main {
             fs.saveAsTiff(g_folder.getName()+"/_"+i+".tiff");
         }
 
-        //Segment from mask
+        //Thresold values for segmentation - (make_resp_hist)
         float val;
         for(int k=1 ; k <= is.getSize(); k++){
             for(int i=0; i<mask.getWidth(); i++){
@@ -270,23 +280,12 @@ public class Main {
     public static double[][] make_resp_hist(ImageProcessor proc){
         
         float[] pixels = (float[])proc.getPixels();
-//        PrintWriter writer = null;
-        
-//        try {
-//            writer = new PrintWriter(new File("resp.dat"));
-//        } catch (FileNotFoundException ex) {
-//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        }
         
         List<Float> list = new ArrayList<>();
-        for(int i=0; i<pixels.length; i++){ //segment values
-            if(pixels[i] != 65535){
-//                writer.println(pixels[i]);
-//                writer.flush();
+        for(int i=0; i<pixels.length; i++){ //segment valid histogram values
+            if(pixels[i] != 65535)
                 list.add(pixels[i]);
-            }
         }
-        //writer.close();
         
         float[] RESP = new float[list.size()];
         float[] RESPS_SRT = new float[list.size()];
@@ -332,9 +331,6 @@ public class Main {
         
         H[NH][1] = NRESP - NHCNT;
         
-        //for(int i=0; i<H.length; i++)
-            //System.out.println(H[i][0]);
-        
         return H;
         
     }
@@ -351,7 +347,6 @@ public class Main {
         for(int i=0; i<NH; i++){
             H_LO[i] = H[i][0] - 0.5*DHX;
             H_HI[i] = H[i][0] + 0.5*DHX;
-            //System.out.println(H_LO[i] + " " + H_HI[i]);
         }
         
         double[] P_HISTO = new double[NH+1];
@@ -380,9 +375,6 @@ public class Main {
         double[] X = {H_MN, H_SD};
         
         double[] P_GAUSS = new double[NH+1];
-        //System.out.println("Starting Gaussian Fit:  ");
-        //System.out.println("Initial X: " + Arrays.toString(X));
-        //System.out.println("Initial RE: " + lfe_func_gauss(X,P_GAUSS));
         
         int NPRM = 2;
         double[][] XBND = new double[NPRM][2];
@@ -390,8 +382,6 @@ public class Main {
         XBND[0][1] = H[NH-1][0];
         XBND[1][0] = DHX;
         XBND[1][1] = 0.5*NH*DHX;
-        //System.out.println(Arrays.toString(XBND[0]));
-        //System.out.println(Arrays.toString(XBND[1]));
         
         MultivariateFunction lfe_func_gauss = ((double[] X1) -> {
             double EPS = 1.0E-09;
@@ -401,15 +391,12 @@ public class Main {
             for (int i = 0; i<NH; i++) {
                 P_GAUSS[i] = cdf((H_HI[i] - X1[0]) / X1[1]) - cdf((H_LO[i] - X1[0]) / X1[1]);
                 sum1 += P_GAUSS[i];
-                //System.out.println(cdf((H_HI[i]-X[0])/X[1]) + "\t" + cdf((H_LO[i]-X[0])/X[1]) + "\t" + P_GAUSS[i]);
             }
             P_GAUSS[NH] = 1.0 - sum1;
             //RELENT = TOTAL(P_H*ALOG((P_H+EPS)/(P_GAUSS+EPS)))/ALOG(2.0)
             double RELENT=0;
             for(int i=0; i<P_H.length; i++)
                 RELENT+= (P_H[i]*Math.log((P_H[i]+EPS)/(P_GAUSS[i]+EPS)))/Math.log(2.0);
-            
-            //System.out.println(Arrays.toString(X1) + "\t" + RELENT);
             
             return RELENT;
             
@@ -446,27 +433,14 @@ public class Main {
         
 
         double RE_GAUSS = lfe_func_gauss(minGauss.getPoint(), P_GAUSS);
-        //System.out.println("");
-        //System.out.println("Finished Gaussian Fit.");
-        //System.out.println("Final X " + Arrays.toString(minGauss.getPoint()));
-        //System.out.println("Final RE: " + RE_GAUSS);
         
         P_H = P_GAUSS;
         
-        //for(int i=0; i<P_H.length; i++)
-            //System.out.println(P_H[i]);
-        
         double[] X_LAP = minGauss.getPoint();
-        //System.out.println(Arrays.toString(X_LAP));
         
         X_LAP[1] = 0.8*X_LAP[1]/Math.sqrt(2.0);
-        //System.out.println(Arrays.toString(X_LAP));
         
         double[] P_LAP = new double[NH+1];
-        //System.out.println("");
-        //System.out.println("Starting Laplacian Fit:  ");
-        //System.out.println("Initial X: " + Arrays.toString(X_LAP));
-        //System.out.println("Initial RE: " + lfe_func_lap(X_LAP,P_LAP));
         
         MultivariateFunction lfe_func_lap = ((double[] X1) -> {
             double EPS = 1.0E-09;
@@ -542,21 +516,10 @@ public class Main {
         
         double RE_LAP = lfe_func_lap(minLap.getPoint(), P_LAP);
         
-        //System.out.println("");
-        //System.out.println("Finished Laplacian Fit.");
-        //System.out.println("Final X " + Arrays.toString(minLap.getPoint()));
-        //System.out.println("Final RE: " + RE_LAP);
-        
         double[] PRMS = new double[]{RE_GAUSS, RE_LAP, 
                                     minGauss.getPoint()[0], minGauss.getPoint()[1],
                                     minLap.getPoint()[0], minLap.getPoint()[1]};
-        
-        //System.out.println("");
-        //System.out.println("PRMS: " + Arrays.toString(PRMS));
-        
-        //System.out.println(imageName.replace(".raw", "") + "\t" + maskName.replace(".raw", "") + "\t" + String.format("%.2f",angle[k]) + "\t" + String.format("%.2f",(100.0*PRMS[0]/PRMS[1])) + "\t" +
-        //                   PRMS[0] + "\t" + PRMS[1] + "\t" + PRMS[2] + "\t" + PRMS[3] + "\t" + PRMS[4] + "\t" + PRMS[5]);
-        
+           
         //report
         String name = imageName.replace(".raw", "_result_"+String.format("%.2f",angle[k])+"_" + FREQ_CEN);
         try {
@@ -597,7 +560,6 @@ public class Main {
         for(int i=0; i<NH; i++){
             P_GAUSS[i] = cdf((H_HI[i]-X[0])/X[1])-cdf((H_LO[i]-X[0])/X[1]);
             sum += P_GAUSS[i];
-            //System.out.println(cdf((H_HI[i]-X[0])/X[1]) + "\t" + cdf((H_LO[i]-X[0])/X[1]) + "\t" + P_GAUSS[i]);
         }
         
         P_GAUSS[NH] = 1.0 - sum;
@@ -687,7 +649,7 @@ public class Main {
         return 0.5 + sum * pdf(z);
     }
     
-    private static void savePlot(LFEChart chart, String name) {
+    public static void savePlot(LFEChart chart, String name) {
         chart.pack();
         Container c = chart.getContentPane();
         BufferedImage im = new BufferedImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
