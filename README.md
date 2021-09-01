@@ -1,12 +1,12 @@
 # Laplacian fractional entropy
-Laplacian fractional entropy (LFE) measures evaluate higher-order statistical properties of x-ray images objectively [1-3]. The LFE measure is calculated from the relative entropy of the response histogram of an image compared to that of a Gaussian histogram matched for mean and variance.[1] These measures have shown to be an effective method to evaluate phantom realism and to select simulation parameters [2-3].
+Laplacian fractional entropy (LFE) is a measure of higher-order statistical properties of images [1-3]. The LFE measure is calculated from the relative entropy of the response histogram of an image compared to that of a Gaussian histogram matched for mean and variance [1].  The approach accounts for entropy effects from binning into a histogram.  The Laplacian distribution is used as a scaling constant, since Laplacian response histograms are a model for natural scenes.  The entropy relative to a Gaussian is normalized to the relative entropy of a Laplacian distribution relative to the Gaussian (and also accounting for binning effects).  Thus 100% LFE can be interpreted as having non-Gausian "structure" that is equivalent to a Laplacian distribution. These measures have shown to be an effective method to evaluate the impact of anatomy and noise in mammography [1], and virtual breast phantom realism [2-3].
 
 ```diff
 + If you use this software to develop your work, cite our most recent publications for future references
 
-[1] Abbey, Craig K et al. “Non-Gaussian statistical properties of breast images.” Medical physics vol. 39,11 (2012): 7121-30. doi:10.1118/1.4761869
-[2] Abbey, Craig K et al. “Evaluation of non-Gaussian statistical properties in virtual breast phantoms.” J Med Imaging vol. 6,2 (2019):2329-4302. 10.1117/1.JMI.6.2.025502
-[3] Barufaldi, B et al. “Computational Breast Anatomy Simulation Using Multi-scale Perlin Noise.” IEEE Trans Med Imaging vol. (2021):
+[1] Abbey, Craig K et al. “Non-Gaussian statistical properties of breast images.” Med Phys vol. 39,11 (2012): 7121-30. doi:10.1118/1.4761869
+[2] Abbey, Craig K et al. “Evaluation of non-Gaussian statistical properties in virtual breast phantoms.” J Med Imaging vol. 6,2 (2019):2329-4302. doi:10.1117/1.JMI.6.2.025502
+[3] Barufaldi, B et al. “Computational Breast Anatomy Simulation Using Multi-scale Perlin Noise.” IEEE Trans Med Imaging vol. 0 (2021):1-10 doi:10.1109/TMI.2021.3087958
 
 ```
 
