@@ -18,13 +18,23 @@
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.Roi;
 import ij.io.FileInfo;
 import ij.io.FileOpener;
 import ij.io.FileSaver;
+import ij.io.Opener;
+import ij.measure.Calibration;
+import ij.plugin.FFT;
+import ij.plugin.FFTMath;
+import ij.plugin.ImageCalculator;
 import ij.plugin.filter.Convolver;
+import ij.plugin.filter.FFTCustomFilter;
+import ij.plugin.filter.FFTFilter;
+import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Container;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,6 +43,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -52,6 +63,7 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.MultiDirectionalSimplex;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.PowellOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
+import org.jtransforms.fft.FloatFFT_2D;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -64,16 +76,25 @@ import org.xml.sax.SAXException;
  */
 public class Main {
     
+    //Options
+    static final private int SIMPLEX = 1;
+    static final private int BOBYQA = 2;
+    static final private int POWELL = 3;
+    
+    static final private int SPATIAL = 0;
+    static final private int FOURIER = 1;
+    
     // Default parameters
     static private int NH = 99; 
     static private double EXC_FRAC = 0.01;
-    static private int opt_gauss = 2;       //SIMPLEX = 1, BOBYQA = 2, POWELL = 3
-    static private int opt_lap = 3;         //SIMPLEX = 1, BOBYQA = 2, POWELL = 3
+    static private int opt_gauss = BOBYQA;       
+    static private int opt_lap = POWELL;         
     static private double[] H_LO, H_HI;
     static private double[] P_H;
     static private boolean flag_plot = false;
     
     // Gabor parameters
+    static private int opt_gabor = FOURIER;
     static private double A_RATIO = 1.0;
     static private double PSHIFT = Math.PI/2;
     static private double FREQ_CEN = 1;
@@ -99,6 +120,7 @@ public class Main {
         
         //read config file
         File xml = new File(args[0]);
+        //File xml = new File("config.xml");
         readConfig(xml);
         
         ImageStack is = calculate_Gabors();
@@ -133,6 +155,7 @@ public class Main {
                 if (node.getNodeType() == Node.ELEMENT_NODE){  
                     Element eElement = (Element) node;
                     
+                    opt_gabor = Integer.parseInt(eElement.getElementsByTagName("domain").item(0).getTextContent());
                     NX = Integer.parseInt(eElement.getElementsByTagName("width").item(0).getTextContent());
                     NY = Integer.parseInt(eElement.getElementsByTagName("height").item(0).getTextContent());
                     DX = Double.parseDouble(eElement.getElementsByTagName("DX").item(0).getTextContent());
@@ -145,6 +168,14 @@ public class Main {
                     angle = new double[nAngles];
                     
                 }
+            }
+            
+            //Window checking
+            if(NX%2 == 0){
+                NX = NX-1;
+                if(NY%2 == 0)
+                    NY = NY-1;
+                System.out.println("WARNING: Window dimensions should be created using 'odd' values.\nThe window dimensions were updated. Check the folder 'kernel'.");
             }
             
             for (int i = 0; i < lfeList.getLength(); i++){  
@@ -174,12 +205,12 @@ public class Main {
                     info.height = Integer.parseInt(eElement.getElementsByTagName("height").item(0).getTextContent());
                     info.intelByteOrder = false;
                     opener = new FileOpener(info);
-                    original = opener.openImage();
+                    original = opener.open(false);
                     
                     info.fileName = eElement.getElementsByTagName("mask").item(0).getTextContent();
                     info.fileType = FileInfo.GRAY8; 
                     opener = new FileOpener(info);
-                    mask = opener.openImage();
+                    mask = opener.open(false);
                     
                     imageName = original.getTitle();
                     maskName = mask.getTitle();
@@ -198,23 +229,28 @@ public class Main {
         int height = original.getHeight();
         ImageStack is = new ImageStack(width, height);
         
-        int X_CEN = (int) Math.round(NX / 2);
-        int Y_CEN = (int) Math.round(NY / 2);
-        
+        //Parameters used for kernel creation
         double DEL_F = (Math.pow(2.0, BW_OCT) - 1.0)*FREQ_CEN/(Math.pow(2.0, BW_OCT) + 1.0);
         double SD_X_FREQ = DEL_F/Math.sqrt(2.0*Math.log(2.0));
         double SD_X = 1.0/(2.0*Math.PI*SD_X_FREQ);
         double SD_Y = A_RATIO*SD_X;
         
-        // Rotate kernel from 0 to 180 degrees
+        // Rotate kernel from 0 to 180 degrees in nAngles
         double rotationAngle = Math.PI/(double)nAngles;
         double theta;
+        int X_CEN, Y_CEN;
         FloatProcessor filter;
-        ImageStack kernels = new ImageStack(NX, NY);
+        ImageStack kernels;
+        
+        kernels = new ImageStack(NX, NY);
+        X_CEN = (int) Math.round(NX / 2);
+        Y_CEN = (int) Math.round(NY / 2);
+        
         for (int i=0; i<nAngles; i++){   
+            
             theta = rotationAngle * i;
             angle[i] = theta;
-            filter = new FloatProcessor(NX, NY);  
+            filter = new FloatProcessor(NX, NY);
 
             for (int x=-X_CEN; x<=X_CEN; x++){
                 for (int y=-Y_CEN; y<=Y_CEN; y++){
@@ -230,35 +266,81 @@ public class Main {
             kernels.addSlice("kernel angle = " + theta, filter);
         }
         
+        // Save kernels
         FileSaver fs;
         File k_folder = new File("kernel");
         if(!k_folder.exists())
             k_folder.mkdir();
         
-        for(int i=1 ; i <= kernels.size(); i++){
-            fs = new FileSaver(new ImagePlus("_"+i,kernels.getProcessor(i)));
-            fs.saveAsTiff(k_folder.getName()+"/_"+i+".tiff");
+        for(int i=1 ; i <= kernels.getSize(); i++){
+            fs = new FileSaver(new ImagePlus("_"+(i-1),kernels.getProcessor(i)));
+            fs.saveAsTiff(k_folder.getName()+"/_"+(i-1)+".tiff");
         }
         
-        ImageProcessor ip = original.getProcessor();
-        
+        // Save Gabor filtering results
         File g_folder = new File("gabor");
         if(!g_folder.exists())
             g_folder.mkdir();
+        
+        // Fourrier Filtering
+        if(opt_gabor == FOURIER){
+            ImageProcessor fft1, fft2, result; //original, kernel, and result
+            float[] pixels;
+            
+            //Window size fft
+            int fft_size = 1;
+            int max = Math.max(width, height); 
+            while(fft_size < max) //get power 2 to resize images
+                fft_size*=2;
+            
+            //copy original image
+            fft1 = doForwardFFT(original.duplicate().getProcessor().convertToFloatProcessor(), fft_size);
+            
+            ImageProcessor k_temp;
+            for (int i=0; i<kernels.size(); i++){
+                
+                //Flipping required for convolution (transpose)
+                k_temp = kernels.getProcessor(i+1);
+                k_temp.flipHorizontal();
+                k_temp.flipVertical();
+                
+                fft2 = doForwardFFT(k_temp, fft_size);
+                result = multiply(fft1, fft2, fft_size, width, height);
+                
+                //normalize signal to sqrt 2*PI
+                //TODO: Update normalization method as a function of kernel parameters
+                pixels = (float[])result.getPixels();
+                for(int k=0; k<pixels.length; k++)
+                    pixels[k] = pixels[k]/(float)(Math.sqrt(2*Math.PI));
+                result.setPixels(pixels);
+                
+                fs = new FileSaver(new ImagePlus("_"+i, result));
+                fs.saveAsTiff(g_folder.getName()+"/_"+i+".tiff");
+                is.addSlice("angle="+i+ " gamma="+A_RATIO+ " psi="+PSHIFT+ " freq="+FREQ_CEN, result);
+                
+            }
+        }
+        
+        // Spacial Domain Filtering
+        else if(opt_gabor == SPATIAL){
+            float[] kernel;
+            ImageProcessor ip = original.getProcessor();
+            FloatProcessor fp;
+            Convolver c = new Convolver();
+            
+            int kw, kh;
+            kw = kernels.getWidth()%2 == 0 ? kernels.getWidth()-1 : kernels.getWidth();
+            kh = kernels.getHeight()%2 == 0 ? kernels.getHeight()-1 : kernels.getHeight();
+            
+            for (int i=0; i<kernels.size(); i++){
+                kernel = (float[]) kernels.getProcessor(i+1).getPixels();
+                fp = ip.convertToFloatProcessor();
+                c.convolveFloat(fp, kernel, kw, kh);      
 
-        // Apply kernels
-        float[] kernel;
-        FloatProcessor fp;
-        Convolver c = new Convolver();
-
-        for (int i=0; i<kernels.size(); i++){
-            kernel = (float[]) kernels.getProcessor(i+1).getPixels();
-            fp = ip.convertToFloatProcessor();
-            c.convolveFloat(fp, kernel, NX, NY);      
-
-            is.addSlice("angle="+i+ " gamma="+A_RATIO+ " psi="+PSHIFT+ " freq="+FREQ_CEN, fp);
-            fs = new FileSaver(new ImagePlus("_"+i,fp));
-            fs.saveAsTiff(g_folder.getName()+"/_"+i+".tiff");
+                is.addSlice("angle="+i+ " gamma="+A_RATIO+ " psi="+PSHIFT+ " freq="+FREQ_CEN, fp);
+                fs = new FileSaver(new ImagePlus("_"+i,fp));
+                fs.saveAsTiff(g_folder.getName()+"/_"+i+".tiff");
+            }
         }
 
         //Thresold values for segmentation - (make_resp_hist)
@@ -268,7 +350,7 @@ public class Main {
                 for(int j=0; j<mask.getHeight(); j++){
                     val = mask.getProcessor().getPixelValue(i, j);
                     if(val == 0)
-                        is.getProcessor(k).putPixelValue(i, j, 65535); //max
+                        is.getProcessor(k).putPixelValue(i, j, Float.MAX_VALUE); 
                 }
             }
         }
@@ -283,10 +365,10 @@ public class Main {
         
         List<Float> list = new ArrayList<>();
         for(int i=0; i<pixels.length; i++){ //segment valid histogram values
-            if(pixels[i] != 65535)
+            if(pixels[i] != Float.MAX_VALUE)
                 list.add(pixels[i]);
         }
-        
+
         float[] RESP = new float[list.size()];
         float[] RESPS_SRT = new float[list.size()];
         for(int i=0; i<RESP.length; i++){
@@ -408,18 +490,18 @@ public class Main {
         PointValuePair minGauss=null, minLap=null;
         
         switch(opt_gauss){
-            case 1:
+            case SIMPLEX:
                 optimizer = new SimplexOptimizer(1e-10, 1e-30);
                 AbstractSimplex simplex = new MultiDirectionalSimplex(2);
                 minGauss = optimizer.optimize(new MaxEval(1000),new ObjectiveFunction(lfe_func_gauss),simplex,GoalType.MINIMIZE,new InitialGuess(X));
                 break;
             
-            case 2:
+            case BOBYQA:
                 boby = new BOBYQAOptimizer(6); //not sure what number of interpolation means
                 minGauss = boby.optimize(new MaxEval(1000),new MaxIter(1000),new ObjectiveFunction(lfe_func_gauss),GoalType.MINIMIZE,new InitialGuess(X),new SimpleBounds(new double[]{XBND[0][0], XBND[1][0]}, new double[]{XBND[0][1], XBND[1][1]}));
                 break;
         
-            case 3:
+            case POWELL:
                 opt = new PowellOptimizer(1e-15, 1e-17, 1e-15, 1e-15);
                 minGauss = opt.optimize(new MaxEval(1000),new ObjectiveFunction(lfe_func_gauss),GoalType.MINIMIZE,new InitialGuess(X));
                 break;
@@ -490,18 +572,18 @@ public class Main {
         });
         
         switch(opt_lap){
-            case 1:
+            case SIMPLEX:
                 optimizer = new SimplexOptimizer(1e-10, 1e-30);
                 AbstractSimplex simplex = new MultiDirectionalSimplex(2);
                 minLap = optimizer.optimize(new MaxEval(1000),new ObjectiveFunction(lfe_func_lap),simplex,GoalType.MINIMIZE,new InitialGuess(X_LAP));
                 break;
             
-            case 2:
+            case BOBYQA:
                 boby = new BOBYQAOptimizer(6); //not sure what number of interpolation means
                 minLap = boby.optimize(new MaxEval(1000),new MaxIter(1000),new ObjectiveFunction(lfe_func_lap),GoalType.MINIMIZE,new InitialGuess(X_LAP),new SimpleBounds(new double[]{XBND[0][0], XBND[1][0]}, new double[]{XBND[0][1], XBND[1][1]}));
                 break;
         
-            case 3:
+            case POWELL:
                 opt = new PowellOptimizer(1e-15, 1e-17, 1e-15, 1e-15);
                 minLap = opt.optimize(new MaxEval(1000),new ObjectiveFunction(lfe_func_lap),GoalType.MINIMIZE,new InitialGuess(X_LAP));
                 break;
@@ -532,6 +614,9 @@ public class Main {
             
             //Save summary on last line
             writer.println();
+//            //DEBUG
+//            System.out.println(imageName.replace(".raw", "") + "\t" + maskName.replace(".raw", "") + "\t" + String.format("%.2f",angle[k]) + "\t" + String.format("%.2f",(100.0*PRMS[0]/PRMS[1])) + "\t" +
+//                            PRMS[0] + "\t" + PRMS[1] + "\t" + PRMS[2] + "\t" + PRMS[3] + "\t" + PRMS[4] + "\t" + PRMS[5]);
             writer.println(imageName.replace(".raw", "") + "," + maskName.replace(".raw", "") + "," + String.format("%.2f",angle[k]) + "," + String.format("%.2f",(100.0*PRMS[0]/PRMS[1])) + "," +
                            PRMS[0] + "," + PRMS[1] + "," + PRMS[2] + "," + PRMS[3] + "," + PRMS[4] + "," + PRMS[5]);
             
@@ -659,5 +744,93 @@ public class Main {
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    private static ImageProcessor doForwardFFT(ImageProcessor ip, int size){
+        
+        int shift_x = (int)(size/2 - ip.getWidth()/2);
+        int shift_y = (int)(size/2 - ip.getHeight()/2);
+        
+        //padding with zeros to fft size
+        FloatProcessor fp = new FloatProcessor(size, size);
+        for(int i=0; i<ip.getWidth(); i++){
+            for(int j=0; j<ip.getHeight(); j++)
+                fp.putPixelValue(i+shift_x, j+shift_y, ip.getf(i, j));
+        }
+        
+        //init complex values
+        float [] complex = new float[size*size*2];
+        float [] padded = (float[]) fp.getPixels();
+        int count =0;
+        for(int i=0; i<padded.length; i++){
+            complex[count] = padded[i];
+            complex[count+1] = 0;
+            count+=2;
+        }
+        
+        FloatFFT_2D fft2d = new FloatFFT_2D(size, size);
+        fft2d.complexForward(complex);
+        
+        fp = new FloatProcessor(complex.length/2, complex.length/2);
+        fp.setPixels(complex);
+        
+        return fp;
+        
+    }
+    
+    private static ImageProcessor multiply(ImageProcessor ip1, ImageProcessor ip2, int size, int width, int height){
+        
+        ImageProcessor ip3=null;
+        
+        float[] pix1 = (float[]) ip1.getPixels();
+        float[] pix2 = (float[]) ip2.getPixels();
+        float[] pix3 = new float[pix1.length]; //result
+        
+        //(a+bi)*(c+di) = (ac-bd) + (bc+ad)i
+        for(int i=0; i<pix1.length; i+=2){
+            pix3[i] = (pix1[i]*pix2[i] - pix1[i+1]*pix2[i+1]);
+            pix3[i+1] = (pix1[i+1]*pix2[i] + pix1[i]*pix2[i+1]);
+        }
+        
+        FloatFFT_2D fft2d = new FloatFFT_2D(size, size);
+        fft2d.complexInverse(pix3, true);
+        
+        int count =0;
+        float[] padded = new float[size*size];
+        for(int i=0; i<padded.length; i++){
+            padded[i] = pix3[count] + pix3[count+1];
+            count +=2;
+        }
+        
+        FloatProcessor fp = new FloatProcessor(size, size, padded);
+        swapQuadrants(fp);
+        
+        //croping
+        Roi roi = new Roi((int)(size/2 - width/2), (int)(size/2 - height/2), width, height);
+        fp.setRoi(roi);
+        
+        ImagePlus spec = new ImagePlus("FFT Convolution", fp.crop());
+        //spec.show();
+            
+        return fp.crop();
+    }
+    
+    public static void swapQuadrants (ImageProcessor ip) {
+        
+            ImageProcessor t1, t2;
+            int size = ip.getWidth()/2;
+            ip.setRoi(size,0,size,size);
+            t1 = ip.crop();
+            ip.setRoi(0,size,size,size);
+            t2 = ip.crop();
+            ip.insert(t1,0,size);
+            ip.insert(t2,size,0);
+            ip.setRoi(0,0,size,size);
+            t1 = ip.crop();
+            ip.setRoi(size,size,size,size);
+            t2 = ip.crop();
+            ip.insert(t1,size,size);
+            ip.insert(t2,0,0);
+            
     }
 }

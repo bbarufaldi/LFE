@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <config>
 	<Gabor>
-		<width>31</width>
-		<height>31</height>
-		<DX>0.14</DX>
-		<DY>0.14</DY>
+		<domain>1</domain>
+		<width>31</width> 
+		<height>31</height> 
+		<DX>0.1</DX>
+		<DY>0.1</DY>
 		<FREQ_CEN>1.0</FREQ_CEN>
 		<A_RATIO>1.0</A_RATIO>
-		<PSHIFT>PI/2</PSHIFT>
+		<PSHIFT>PI/4</PSHIFT>
 		<angles>6</angles>
 		<BW_OCT>1.4</BW_OCT>
 	</Gabor>
@@ -16,7 +17,7 @@
 		<EXC_FRAC>0.01</EXC_FRAC>
 		<Optmizer_Gauss_ID>2</Optmizer_Gauss_ID>
 		<Optmizer_Lap_ID>3</Optmizer_Lap_ID>
-		<Save_Plot>true</Save_Plot>
+		<Save_Plot>false</Save_Plot>
 	</LFE>
 	<Images>
 		<mask>mask.raw</mask>
