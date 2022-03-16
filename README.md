@@ -48,6 +48,14 @@ Image and mask dimensions (pixels).
 
 ### Gabor
 
+- Domain
+
+ID used to assign Gabor filtering in spatial or Fourier domain. 
+
+ 0: Spatial domain.
+  
+ 1: Fourier domain.
+
 - Width and height 
 
 Window dimensions of your Gabor kernels used for 2D convolution (spatial domain).
