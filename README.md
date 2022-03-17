@@ -78,7 +78,7 @@ Phase shift of Gabor kernel.
 
 - angles
 
-Number of rotation angles (PI/n) of Gabor kernel. Ex. n=4 (0°, 45°, 90°, and 180°).
+Number of rotation angles (PI/n) of Gabor kernel. Ex. n=4 (0°, 45°, 90°, and 135°).
 
 - BW_OCT
 
